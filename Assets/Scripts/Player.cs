@@ -3,44 +3,81 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    [SerializeField] private int speed = 5;
-    [Tooltip("Скорость плавного поворота персонажа")]
-    [SerializeField] private float rotationSpeed = 720f;
+    [SerializeField] private int speed = 7;
+    [SerializeField] GameInput gameInput;
+
+    private bool isWalking;
+    private bool canMove;
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
+        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
 
-        Vector3 moveDirection = Vector3.zero;
+        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y);
 
-        // Считываем ввод с клавиатуры
-        if (Keyboard.current.wKey.isPressed)
-            moveDirection += Vector3.forward;
-        if (Keyboard.current.sKey.isPressed)
-            moveDirection += Vector3.back;
-        if (Keyboard.current.aKey.isPressed)
-            moveDirection += Vector3.left;
-        if (Keyboard.current.dKey.isPressed)
-            moveDirection += Vector3.right;
+        float moveDistance = speed * Time.deltaTime;
+        float playerRadius = .7f;
+        float playerHeight = 1.9f;
+        bool canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDir, moveDistance);
 
-        // Если игрок куда-то движется (вектор не равен нулю)
-        if (moveDirection != Vector3.zero)
+        if (!canMove)
         {
-            moveDirection.Normalize();
+            Vector3 moveDirX = new Vector3(moveDir.x, 0, 0).normalized;
+            speed = 5;
+            canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirX, moveDistance);
 
-            // 1. Плавный поворот в сторону движения
-            // Рассчитываем, куда персонаж должен смотреть
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
 
-            // Плавно вращаем персонажа от текущего поворота к целевому
-            transform.rotation = Quaternion.RotateTowards(
-                transform.rotation,
-                targetRotation,
-                rotationSpeed * Time.deltaTime
-            );
+            if (canMove)
+            {
+                moveDir = moveDirX;
+            }
+            else
+            {
 
-            // 2. Движение вперед (теперь можно двигать объект просто через Vector3.forward в локальных координатах)
-            transform.Translate(Vector3.forward * speed * Time.deltaTime);
+                Vector3 moveDirZ = new Vector3(0, 0, moveDir.z).normalized;
+                speed = 5;
+                canMove = !Physics.CapsuleCast(transform.position, transform.position + Vector3.up * playerHeight, playerRadius, moveDirZ, moveDistance);
+
+                if (canMove)
+                {
+                    moveDir = moveDirZ;
+                }
+                else
+                {
+                    //не можем двигатся вообщем
+                }
+            }
+        }
+        if (canMove)
+        {
+            speed = 7;
+            transform.position += (moveDir * speed * Time.deltaTime);
+        }
+        isWalking = moveDir != Vector3.zero;
+
+        float rotateSpeed = 10f;
+        transform.forward = Vector3.Slerp(transform.forward, moveDir, rotateSpeed * Time.deltaTime);
+    }
+
+    public bool IsWalking()
+    {
+        return isWalking;
+    }
+
+    private void HandleInteraction()
+    {
+        Vector2 inputVector = gameInput.GetMovementVectorNormalized();
+
+        Vector3 moveDir = new Vector3(inputVector.x, 0, inputVector.y);
+
+        float interactDistance = 2f;
+        if (Physics.Raycast(transform.position, moveDir, out RaycastHit raycastHit, interactDistance))
+        {
+            Debug.Log(raycastHit.transform);
+        }
+        else
+        {
+            Debug.Log("-");
         }
     }
 }
