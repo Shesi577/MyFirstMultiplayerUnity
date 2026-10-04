@@ -3,24 +3,26 @@ using UnityEngine;
 
 public class ClearCounter : BaseCounter, IKitchenObjectParent
 {
-    [SerializeField] private KitchenObjectSO kitchenObjectSO;
 
     public override void Interact(Player player)
     {
-        if (HasKitchenObject())
+        if (!HasKitchenObject())
         {
+
             if (player.HasKitchenObject())
             {
-                player.GetKitchenObject().SetKitchenObjectParent(this);
-            }
-            else
-            {
 
+                player.GetKitchenObject().SetKitchenObjectParent(this);
             }
         }
         else
         {
-            GetKitchenObject().SetKitchenObjectParent(player);
+
+            if (!player.HasKitchenObject())
+            {
+
+                GetKitchenObject().SetKitchenObjectParent(player);
+            }
         }
     }
 }
