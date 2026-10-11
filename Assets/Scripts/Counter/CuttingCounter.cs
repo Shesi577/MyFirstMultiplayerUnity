@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class CuttingCounter : BaseCounter, IKitchenObjectParent
 {
+    public event EventHandler OnCut;
     public event EventHandler<OnProgressChangedEventArgs> OnProgressChanged;
     public class OnProgressChangedEventArgs : EventArgs
     {
@@ -34,8 +35,18 @@ public class CuttingCounter : BaseCounter, IKitchenObjectParent
 
             if (!player.HasKitchenObject())
             {
-
                 GetKitchenObject().SetKitchenObjectParent(player);
+            }
+            else
+            {
+                if (HasReceiptWithInput(this.GetKitchenObject().GetKitchenObjectSO()))
+                {
+                    cuttingProgress = 0;
+                    CuttingReceiptSO cuttingReceiptSO = GetCuttingReceiptSOWithInput(GetKitchenObject().GetKitchenObjectSO());
+                    OnProgressChanged?.Invoke(this, new OnProgressChangedEventArgs { progressNormalized = (float)cuttingProgress / cuttingReceiptSO.cuttingprogressMax });
+                }
+                GetKitchenObject().SetKitchenObjectParent(player);
+
             }
         }
     }
@@ -45,6 +56,8 @@ public class CuttingCounter : BaseCounter, IKitchenObjectParent
         if (HasKitchenObject() && HasReceiptWithInput(GetKitchenObject().GetKitchenObjectSO()))
         {
             cuttingProgress++;
+
+            OnCut?.Invoke(this, EventArgs.Empty);
             CuttingReceiptSO cuttingReceiptSO = GetCuttingReceiptSOWithInput(GetKitchenObject().GetKitchenObjectSO());
             OnProgressChanged?.Invoke(this, new OnProgressChangedEventArgs { progressNormalized = (float)cuttingProgress / cuttingReceiptSO.cuttingprogressMax });
             if (cuttingProgress >= cuttingReceiptSO.cuttingprogressMax)
@@ -80,7 +93,10 @@ public class CuttingCounter : BaseCounter, IKitchenObjectParent
     {
         foreach (CuttingReceiptSO cuttingReceiptSO in cuttingReceiptSOArray)
         {
-            return cuttingReceiptSO;
+            if (cuttingReceiptSO.input == inputKitchenObjectSo)
+            {
+                return cuttingReceiptSO;
+            }
         }
         return null;
     }

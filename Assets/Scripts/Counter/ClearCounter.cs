@@ -21,8 +21,8 @@ public class ClearCounter : BaseCounter, IKitchenObjectParent
             if (!player.HasKitchenObject())
             {
 
-                GetKitchenObject().SetKitchenObjectParent(player);
             }
+                GetKitchenObject().SetKitchenObjectParent(player);
         }
     }
 }
