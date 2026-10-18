@@ -1,25 +1,29 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ProgressBarUI : MonoBehaviour
 {
-    [SerializeField] private CuttingCounter cuttingCounter;
-
+    [SerializeField] private GameObject hasObjectGameObject;
     [SerializeField] private Image barImage;
+
+    private IHasProgress hasProgress;
 
     private void Start()
     {
-        cuttingCounter.OnProgressChanged += CuttingCounter_OnProgressChanged;
+        hasProgress = hasObjectGameObject.GetComponent<IHasProgress>();
+
+        hasProgress.OnProgressChanged += HasProgress_OnProgressChanged;
 
         barImage.fillAmount = 0f;
         Hide();
     }
 
-    private void CuttingCounter_OnProgressChanged(object sender, CuttingCounter.OnProgressChangedEventArgs e)
+    private void HasProgress_OnProgressChanged(object sender, IHasProgress.OnProgressChangedEventArgs e)
     {
-
         barImage.fillAmount = e.progressNormalized;
-        if (e.progressNormalized == 0f || e.progressNormalized == 1)
+
+        if (Mathf.Approximately(e.progressNormalized, 0f) || Mathf.Approximately(e.progressNormalized, 1f))
         {
             Hide();
         }
@@ -29,12 +33,14 @@ public class ProgressBarUI : MonoBehaviour
         }
     }
 
-    private void Hide()
+    private void Hide() => gameObject.SetActive(false);
+    private void Show() => gameObject.SetActive(true);
+
+    private void OnDestroy()
     {
-        gameObject.SetActive(false);
-    }
-    private void Show()
-    {
-        gameObject.SetActive(true);
+        if (hasProgress != null)
+        {
+            hasProgress.OnProgressChanged -= HasProgress_OnProgressChanged;
+        }
     }
 }
